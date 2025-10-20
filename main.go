@@ -64,7 +64,8 @@ type apiConfig struct {
 
 // Middleware to increment file server hit counter
 func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
-	cfg.fileserverHits.Add(1)
-	// next.Header().Set("Cache-Control", "no-cache")
-	return next
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.fileserverHits.Add(1)
+		next.ServeHTTP(w, r)
+	})
 }
