@@ -17,13 +17,13 @@ func main() {
 	mux.Handle("/app/", apiCfg.middlewareMetricsInc(fileHandler))
 
 	// Readiness probe endpoint
-	mux.HandleFunc("GET /healthz", readyHandler)
+	mux.HandleFunc("GET /api/healthz", readyHandler)
 
 	// Metrics endpoint
-	mux.HandleFunc("GET /metrics", apiCfg.metricsHandler)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 
 	// Reset metrics endpoint
-	mux.HandleFunc("POST /reset", apiCfg.resetMetricsHandler)
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetMetricsHandler)
 
 	// Start the server
 	chirpyServer := http.Server{
