@@ -49,31 +49,45 @@ func vcHandler(w http.ResponseWriter, r *http.Request) {
 	// Check if Chirp over 140 characters
 	if len(params.Body) > 140 {
 		respondWithError(w, 400, "Chirp is too long")
-		// respBody := returnVals{
-		// 	Error: "Chirp is too long",
-		// }
-		// dat, err := json.Marshal(respBody)
-		// if err != nil {
-		// 	log.Printf("Something went wrong")
-		// 	w.WriteHeader(400)
-		// 	return
-		// }
-		// w.WriteHeader(400)
-		// w.Header().Set("Content-Type", "application/json")
-		// w.Write(dat)
+
 	} else {
 		// If we reach here, Chirp is valid
 		cleaned_body := profanityFilter(params.Body)
 		respondWithJSON(w, 200, returnVals{Cleaned_Body: cleaned_body})
-		// dat, err := json.Marshal(respBody)
-		// if err != nil {
-		// 	log.Printf("Something went wrong")
-		// 	w.WriteHeader(400)
-		// 	return
-		// }
-		// w.WriteHeader(200)
-		// w.Header().Set("Content-Type", "application/json")
-		// w.Write(dat)
 	}
+
+}
+
+// User creation handler
+func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) {
+	// Request section
+	type parameters struct {
+		Email string `json:"email"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding parameters: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	defer r.Body.Close()
+	// Create user in database
+	newUser, err := cfg.dbQueries.CreateUser(r.Context(), params.Email)
+	if err != nil {
+		respondWithError(w, 400, "Error creating user")
+		return
+	}
+	createdUser := User{
+		ID:        newUser.ID,
+		CreatedAt: newUser.CreatedAt,
+		UpdatedAt: newUser.UpdatedAt,
+		Email:     newUser.Email,
+	}
+
+	// Response section
+
+	respondWithJSON(w, 201, createdUser)
 
 }

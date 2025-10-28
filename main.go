@@ -6,11 +6,27 @@ import (
 	"net/http"
 	"os"
 	"sync/atomic"
+	"time"
 
 	"github.com/frogonabike/chirpy/internal/database"
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
+
+// Configuration struct for stateful data
+type apiConfig struct {
+	fileserverHits atomic.Int32
+	dbQueries      *database.Queries
+}
+
+// User model with JSON tags
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Email     string    `json:"email"`
+}
 
 func main() {
 	// Load environment variables
@@ -48,6 +64,9 @@ func main() {
 	// Reset metrics endpoint
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetMetricsHandler)
 
+	// User creation endpoint
+	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
+
 	// Chirp validation endpoint
 
 	mux.HandleFunc("POST /api/validate_chirp", vcHandler)
@@ -60,10 +79,4 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-}
-
-// Configuration struct for stateful data
-type apiConfig struct {
-	fileserverHits atomic.Int32
-	dbQueries      *database.Queries
 }
