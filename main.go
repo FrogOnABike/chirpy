@@ -18,6 +18,7 @@ import (
 type apiConfig struct {
 	fileserverHits atomic.Int32
 	dbQueries      *database.Queries
+	platform       string
 }
 
 // User model with JSON tags
@@ -43,6 +44,7 @@ func main() {
 	// Initialize API configuration
 	apiCfg := &apiConfig{
 		dbQueries: database.New(db),
+		platform:  os.Getenv("PLATFORM"),
 	}
 	apiCfg.fileserverHits.Store(0)
 
@@ -61,8 +63,8 @@ func main() {
 	// Metrics endpoint
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 
-	// Reset metrics endpoint
-	mux.HandleFunc("POST /admin/reset", apiCfg.resetMetricsHandler)
+	// Reset users database
+	mux.HandleFunc("POST /admin/reset", apiCfg.resetUsersHandler)
 
 	// User creation endpoint
 	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
