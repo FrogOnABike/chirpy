@@ -29,6 +29,15 @@ type User struct {
 	Email     string    `json:"email"`
 }
 
+// Chirp model with JSON tags
+type Chirp struct {
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
+}
+
 func main() {
 	// Load environment variables
 	godotenv.Load()
@@ -69,9 +78,9 @@ func main() {
 	// User creation endpoint
 	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
 
-	// Chirp validation endpoint
+	// Chirp endpoint
+	mux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
 
-	mux.HandleFunc("POST /api/validate_chirp", vcHandler)
 	// Start the server
 	chirpyServer := http.Server{
 		Addr:    ":8080",
