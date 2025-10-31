@@ -78,8 +78,14 @@ func main() {
 	// User creation endpoint
 	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
 
-	// Chirp endpoint
+	// Chirp creation endpoint
 	mux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
+
+	// Return all chirps endpoint
+	mux.HandleFunc("GET /api/chirps", apiCfg.getAllChirpsHandler)
+
+	// Return specfic chirp endpoint
+	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getChirpByIDHandler)
 
 	// Start the server
 	chirpyServer := http.Server{
