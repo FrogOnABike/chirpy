@@ -66,3 +66,52 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 	respondWithJSON(w, 201, createdUser)
 
 }
+
+// User login handler - POST /api/login
+func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
+	// Request section
+	type parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding parameters: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	defer r.Body.Close()
+
+	// Validate email and password presence
+	if params.Email == "" || params.Password == "" {
+		respondWithError(w, 400, "Email and password are required")
+		return
+	}
+
+	// Retrieve user from database
+	user, err := cfg.dbQueries.UserLogin(r.Context(), params.Email)
+	if err != nil {
+		respondWithError(w, 401, "incorrect email or password")
+		return
+	}
+	// Verify password
+	match, err := auth.CheckPasswordHash(params.Password, user.HashedPassword)
+	if err != nil || !match {
+		respondWithError(w, 401, "incorrect email or password")
+		return
+	}
+
+	// Map returned database user model to API user model
+	loggedInUser := User{
+		ID:        user.ID,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+		Email:     user.Email,
+	}
+
+	// Response section
+	respondWithJSON(w, 200, loggedInUser)
+}

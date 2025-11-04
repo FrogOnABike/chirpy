@@ -11,3 +11,7 @@ RETURNING id, created_at, updated_at, email;
 
 -- name: ResetUsers :exec
 DELETE FROM users *;
+
+-- name: UserLogin :one
+SELECT id, created_at, updated_at, email, hashed_password FROM users
+WHERE email = $1;

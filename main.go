@@ -87,6 +87,9 @@ func main() {
 	// Return specfic chirp endpoint
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getChirpByIDHandler)
 
+	// Login endpoint
+	mux.HandleFunc("POST /api/login", apiCfg.userLoginHandler)
+
 	// Start the server
 	chirpyServer := http.Server{
 		Addr:    ":8080",
