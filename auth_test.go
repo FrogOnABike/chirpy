@@ -2,8 +2,10 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/frogonabike/chirpy/internal/auth"
+	"github.com/google/uuid"
 )
 
 func TestPasswordHashing(t *testing.T) {
@@ -32,5 +34,27 @@ func TestPasswordHashing(t *testing.T) {
 	}
 	if match {
 		t.Errorf("Wrong password should not match the hash")
+	}
+}
+
+func TestJWTCreationAndValidation(t *testing.T) {
+	userID := "123e4567-e89b-12d3-a456-426614174000"
+	uid, _ := uuid.Parse(userID)
+	tokenSecret := "testsecret"
+	expiresIn := 2 * time.Hour
+
+	// Create JWT
+	token, err := auth.MakeJWT(uid, tokenSecret, expiresIn)
+	if err != nil {
+		t.Fatalf("Error creating JWT: %s", err)
+	}
+
+	// Validate JWT
+	returnedUserID, err := auth.ValidateJWT(token, tokenSecret)
+	if err != nil {
+		t.Fatalf("Error validating JWT: %s", err)
+	}
+	if returnedUserID != uid {
+		t.Errorf("Expected user ID %s, got %s", uid, returnedUserID)
 	}
 }

@@ -27,6 +27,7 @@ func CheckPasswordHash(password, hash string) (bool, error) {
 	return match, nil
 }
 
+// Function to create a JWT token for a given user ID
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
 	// Load environment variables
 	godotenv.Load()
@@ -50,4 +51,26 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 		return "", err
 	}
 	return signedToken, nil
+}
+
+// Function to parse and validate a JWT token, returning the user ID if valid
+func ValidateJWT(tokenString string, tokenSecret string) (uuid.UUID, error) {
+	// Load environment variables
+	godotenv.Load()
+
+	// Get the JWT secret key from environment variables
+	mySigningKey := []byte(os.Getenv("JWT_SECRET"))
+
+	// Parse the token
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return mySigningKey, nil
+	})
+	if err != nil {
+		return uuid.Nil, err
+	} else if claims, ok := token.Claims.(*jwt.RegisteredClaims); ok {
+		return uuid.Parse(claims.Subject)
+	} else {
+		return uuid.Nil, nil
+	}
+
 }
