@@ -2,6 +2,7 @@ package auth
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -72,5 +73,21 @@ func ValidateJWT(tokenString string, tokenSecret string) (uuid.UUID, error) {
 	} else {
 		return uuid.Nil, nil
 	}
+
+}
+
+// Function to extract Bearer token from HTTP headers
+func GetBearerToken(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", http.ErrNoCookie
+	}
+
+	const prefix = "Bearer "
+	if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
+		return "", http.ErrNoCookie
+	}
+
+	return authHeader[len(prefix):], nil
 
 }
