@@ -1,40 +1,46 @@
 package auth
 
 import (
-	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
-	"github.com/joho/godotenv"
 )
 
 func HashPassword(password string) (string, error) {
 	hash, err := argon2id.CreateHash(password, argon2id.DefaultParams)
+	// HashPassword generates an Argon2id hash for the provided password.
+	// It returns the encoded hash string on success or a non-nil error if
+	// the hashing operation fails.
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 	return hash, nil
 }
 
 func CheckPasswordHash(password, hash string) (bool, error) {
 	match, err := argon2id.ComparePasswordAndHash(password, hash)
+	//
+	// Return values:
+	//  - (true, nil)  : password matches the hash
+	//  - (false, nil) : password does not match the hash
+	//  - (false, err) : the hash was malformed or comparison failed
+	//
+	// This function returns errors instead of terminating the process so callers
+	// can handle malformed hashes or other comparison errors appropriately.
 	if err != nil {
-		log.Fatal(err)
+		return false, err
 	}
 	return match, nil
 }
 
 // Function to create a JWT token for a given user ID
 func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
-	// Load environment variables
-	godotenv.Load()
 
-	// Get the JWT secret key from environment variables
-	mySigningKey := []byte(os.Getenv("JWT_SECRET"))
+	// Define the signing key
+	mySigningKey := []byte(tokenSecret)
 
 	// Create the JWT claims, which includes the user ID and expiry time
 	claims := &jwt.RegisteredClaims{
@@ -56,11 +62,9 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 
 // Function to parse and validate a JWT token, returning the user ID if valid
 func ValidateJWT(tokenString string, tokenSecret string) (uuid.UUID, error) {
-	// Load environment variables
-	godotenv.Load()
 
-	// Get the JWT secret key from environment variables
-	mySigningKey := []byte(os.Getenv("JWT_SECRET"))
+	// Define the signing key
+	mySigningKey := []byte(tokenSecret)
 
 	// Parse the token
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {

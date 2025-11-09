@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/frogonabike/chirpy/internal/auth"
 	"github.com/frogonabike/chirpy/internal/database"
@@ -73,7 +74,9 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Expiry   int    `json:"expiry"`
 	}
+	expiryTime := 3600 * time.Second // Default to 1 hour
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -104,12 +107,28 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check and set token expiry
+	if params.Expiry <= 0 || params.Expiry > 3600 {
+		expiryTime = 3600 * time.Second // Default to 1 hour
+	} else {
+		expiryTime = time.Duration(params.Expiry) * time.Second
+	}
+
+	// Create JWT token
+	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiryTime)
+	if err != nil {
+		log.Printf("Error creating JWT: %s", err)
+		respondWithError(w, 500, "Internal server error")
+		return
+	}
+
 	// Map returned database user model to API user model
 	loggedInUser := User{
 		ID:        user.ID,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 		Email:     user.Email,
+		Token:     token,
 	}
 
 	// Response section

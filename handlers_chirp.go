@@ -5,21 +5,36 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/frogonabike/chirpy/internal/auth"
 	"github.com/frogonabike/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
-// Hadler to validate chirp content and create chirp
+// Hadler to validate chirp content and create chirp - POST /api/chirps
 func (cfg *apiConfig) chirpHandler(w http.ResponseWriter, r *http.Request) {
 	// Request section
 	type parameters struct {
-		Body   string `json:"body"`
-		UserID string `json:"user_id"`
+		Body string `json:"body"`
 	}
 
+	// Extract JWT from Authorization header
+	jwtToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Missing or invalid Authorization header")
+		return
+	}
+
+	// Validate JWT
+	userID, err := auth.ValidateJWT(jwtToken, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "Invalid token")
+		return
+	}
+
+	// Decode request body
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		log.Printf("Error decoding parameters: %s", err)
 		w.WriteHeader(500)
@@ -40,7 +55,7 @@ func (cfg *apiConfig) chirpHandler(w http.ResponseWriter, r *http.Request) {
 	// Create chirp in database
 	newChirp, err := cfg.dbQueries.CreateChirp(r.Context(), database.CreateChirpParams{
 		Body:   params.Body,
-		UserID: uuid.NullUUID{UUID: uuid.MustParse(params.UserID), Valid: true},
+		UserID: uuid.NullUUID{UUID: userID, Valid: true},
 	})
 	if err != nil {
 		log.Printf("Error creating chirp: %s", err)

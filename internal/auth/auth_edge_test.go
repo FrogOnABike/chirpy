@@ -88,3 +88,12 @@ func TestPassword_TamperedHash(t *testing.T) {
 		t.Fatalf("expected wrong password to not validate")
 	}
 }
+
+func TestCheckPasswordHash_MalformedHash(t *testing.T) {
+	// Now that CheckPasswordHash returns errors instead of exiting,
+	// ensure a malformed hash produces a non-nil error.
+	_, err := auth.CheckPasswordHash("pw", "not-a-valid-hash")
+	if err == nil {
+		t.Fatalf("expected error for malformed hash, got nil")
+	}
+}
