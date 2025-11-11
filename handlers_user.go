@@ -74,9 +74,9 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
-		Expiry   int    `json:"expiry"`
+		// Expiry   int    `json:"expiry"`
 	}
-	expiryTime := 3600 * time.Second // Default to 1 hour
+	expiryTime := 1 * time.Hour // Default to 1 hour
 
 	decoder := json.NewDecoder(r.Body)
 	params := parameters{}
@@ -108,11 +108,11 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check and set token expiry
-	if params.Expiry <= 0 || params.Expiry > 3600 {
-		expiryTime = 3600 * time.Second // Default to 1 hour
-	} else {
-		expiryTime = time.Duration(params.Expiry) * time.Second
-	}
+	// if params.Expiry <= 0 || params.Expiry > 3600 {
+	// 	expiryTime = 3600 * time.Second // Default to 1 hour
+	// } else {
+	// 	expiryTime = time.Duration(params.Expiry) * time.Second
+	// }
 
 	// Create JWT token
 	token, err := auth.MakeJWT(user.ID, cfg.jwtSecret, expiryTime)
