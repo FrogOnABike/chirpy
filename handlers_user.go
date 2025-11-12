@@ -8,6 +8,7 @@ import (
 
 	"github.com/frogonabike/chirpy/internal/auth"
 	"github.com/frogonabike/chirpy/internal/database"
+	"github.com/google/uuid"
 )
 
 // User creation handler - POST /api/users
@@ -121,14 +122,35 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, 500, "Internal server error")
 		return
 	}
+	// Create refresh token
+	refreshtoken, err := auth.MakeRefreshToken()
+	if err != nil {
+		log.Printf("Error creating refresh token: %s", err)
+		respondWithError(w, 500, "Internal server error")
+		return
+	}
+	// Create refresh token db record
+	// dbParams for refresh token
+	dbParams := database.CreateRTokenParams{
+		Token:     refreshtoken,
+		UserID:    uuid.NullUUID{UUID: user.ID, Valid: true},
+		ExpiresAt: time.Now().Add(60 * 24 * time.Hour), // Refresh token valid for 60 days
+	}
+	_, err = cfg.dbQueries.CreateRToken(r.Context(), dbParams)
+	if err != nil {
+		log.Printf("Error creating refresh token: %s", err)
+		respondWithError(w, 500, "Internal server error")
+		return
+	}
 
 	// Map returned database user model to API user model
 	loggedInUser := User{
-		ID:        user.ID,
-		CreatedAt: user.CreatedAt,
-		UpdatedAt: user.UpdatedAt,
-		Email:     user.Email,
-		Token:     token,
+		ID:           user.ID,
+		CreatedAt:    user.CreatedAt,
+		UpdatedAt:    user.UpdatedAt,
+		Email:        user.Email,
+		Token:        token,
+		RefreshToken: refreshtoken,
 	}
 
 	// Response section
