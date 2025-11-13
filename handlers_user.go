@@ -132,9 +132,8 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Create refresh token db record
 	// dbParams for refresh token
 	dbParams := database.CreateRTokenParams{
-		Token:     refreshtoken,
-		UserID:    uuid.NullUUID{UUID: user.ID, Valid: true},
-		ExpiresAt: time.Now().Add(60 * 24 * time.Hour), // Refresh token valid for 60 days
+		Token:  refreshtoken,
+		UserID: uuid.NullUUID{UUID: user.ID, Valid: true},
 	}
 	_, err = cfg.dbQueries.CreateRToken(r.Context(), dbParams)
 	if err != nil {

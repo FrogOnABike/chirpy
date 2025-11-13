@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -19,20 +18,19 @@ VALUES (
     NOW(),
     NOW(),
     $2,
-    $3,
+    NOW() + INTERVAL '60 days',
     NULL 
 )
 RETURNING token, created_at, updated_at, user_id, expires_at, revoked_at
 `
 
 type CreateRTokenParams struct {
-	Token     string
-	UserID    uuid.NullUUID
-	ExpiresAt time.Time
+	Token  string
+	UserID uuid.NullUUID
 }
 
 func (q *Queries) CreateRToken(ctx context.Context, arg CreateRTokenParams) (RefreshToken, error) {
-	row := q.db.QueryRowContext(ctx, createRToken, arg.Token, arg.UserID, arg.ExpiresAt)
+	row := q.db.QueryRowContext(ctx, createRToken, arg.Token, arg.UserID)
 	var i RefreshToken
 	err := row.Scan(
 		&i.Token,
