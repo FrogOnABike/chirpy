@@ -97,6 +97,9 @@ func main() {
 	// Login endpoint
 	mux.HandleFunc("POST /api/login", apiCfg.userLoginHandler)
 
+	// Token refresh endpoint
+	mux.HandleFunc("POST /api/refresh", apiCfg.tokenRefreshHandler)
+
 	// Start the server
 	chirpyServer := http.Server{
 		Addr:    ":8080",

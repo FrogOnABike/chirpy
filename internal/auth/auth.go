@@ -40,7 +40,7 @@ func CheckPasswordHash(password, hash string) (bool, error) {
 }
 
 // Function to create a JWT token for a given user ID
-func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (string, error) {
+func MakeJWT(userID uuid.UUID, tokenSecret string) (string, error) {
 
 	// Define the signing key
 	mySigningKey := []byte(tokenSecret)
@@ -49,7 +49,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 	claims := &jwt.RegisteredClaims{
 		Issuer:    "chirpy",
 		Subject:   userID.String(),
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(expiresIn)),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(1 * time.Hour)),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 	// Create the token using the claims

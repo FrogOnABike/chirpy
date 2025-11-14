@@ -4,7 +4,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	auth "github.com/frogonabike/chirpy/internal/auth"
 	"github.com/google/uuid"
@@ -14,7 +13,7 @@ func TestJWT_ExpiredToken(t *testing.T) {
 	uid := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	secret := "edge_secret"
 	// Create a token that's already expired by passing negative duration
-	token, err := auth.MakeJWT(uid, secret, -1*time.Hour)
+	token, err := auth.MakeJWT(uid, secret)
 	if err != nil {
 		t.Fatalf("MakeJWT error: %v", err)
 	}
@@ -28,7 +27,7 @@ func TestJWT_InvalidSecret(t *testing.T) {
 	uid := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	// ensure MakeJWT and ValidateJWT use the environment variable the implementation reads
 	os.Setenv("JWT_SECRET", "secretA")
-	token, err := auth.MakeJWT(uid, "secretA", 1*time.Hour)
+	token, err := auth.MakeJWT(uid, "secretA")
 	if err != nil {
 		t.Fatalf("MakeJWT error: %v", err)
 	}

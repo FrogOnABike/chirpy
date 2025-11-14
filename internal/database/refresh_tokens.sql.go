@@ -42,3 +42,16 @@ func (q *Queries) CreateRToken(ctx context.Context, arg CreateRTokenParams) (Ref
 	)
 	return i, err
 }
+
+const getUserFromRToken = `-- name: GetUserFromRToken :one
+SELECT refresh_tokens.user_id
+FROM refresh_tokens
+WHERE refresh_tokens.token = $1 AND refresh_tokens.expires_at > NOW() AND refresh_tokens.revoked_at IS NULL
+`
+
+func (q *Queries) GetUserFromRToken(ctx context.Context, token string) (uuid.NullUUID, error) {
+	row := q.db.QueryRowContext(ctx, getUserFromRToken, token)
+	var user_id uuid.NullUUID
+	err := row.Scan(&user_id)
+	return user_id, err
+}

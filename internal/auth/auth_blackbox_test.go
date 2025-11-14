@@ -2,7 +2,6 @@ package auth_test
 
 import (
 	"testing"
-	"time"
 
 	auth "github.com/frogonabike/chirpy/internal/auth"
 	"github.com/google/uuid"
@@ -28,7 +27,7 @@ func TestPasswordHashing_BlackBox(t *testing.T) {
 func TestJWT_CreateAndValidate_BlackBox(t *testing.T) {
 	uid := uuid.MustParse("123e4567-e89b-12d3-a456-426614174000")
 	secret := "bbsecret"
-	token, err := auth.MakeJWT(uid, secret, 1*time.Hour)
+	token, err := auth.MakeJWT(uid, secret)
 	if err != nil {
 		t.Fatalf("MakeJWT error: %v", err)
 	}
