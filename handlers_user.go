@@ -154,36 +154,3 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Response section
 	respondWithJSON(w, 200, loggedInUser)
 }
-
-// refreshToken handler - POST /api/refresh
-func (cfg *apiConfig) tokenRefreshHandler(w http.ResponseWriter, r *http.Request) {
-	// Request section
-	refreshToken, err := auth.GetBearerToken(r.Header)
-	if err != nil {
-		respondWithError(w, 401, "Missing or invalid Authorization header")
-		return
-	}
-
-	// Validate refresh token in database
-	userID, err := cfg.dbQueries.GetUserFromRToken(r.Context(), refreshToken)
-	if err != nil {
-		respondWithError(w, 401, "Invalid or expired refresh token")
-		return
-	}
-
-	newJWT, err := auth.MakeJWT(userID.UUID, cfg.jwtSecret)
-	if err != nil {
-		log.Printf("Error creating JWT: %s", err)
-		respondWithError(w, 500, "Internal server error")
-		return
-	}
-
-	// Response section
-	type response struct {
-		Token string `json:"token"`
-	}
-	resp := response{
-		Token: newJWT,
-	}
-	respondWithJSON(w, 200, resp)
-}

@@ -100,6 +100,9 @@ func main() {
 	// Token refresh endpoint
 	mux.HandleFunc("POST /api/refresh", apiCfg.tokenRefreshHandler)
 
+	// Revolk refresh token endpoint
+	mux.HandleFunc("POST /api/revoke", apiCfg.revokeRefreshTokenHandler)
+
 	// Start the server
 	chirpyServer := http.Server{
 		Addr:    ":8080",
