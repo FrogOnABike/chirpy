@@ -85,6 +85,9 @@ func main() {
 	// User creation endpoint
 	mux.HandleFunc("POST /api/users", apiCfg.createUserHandler)
 
+	// User update endpoint
+	mux.HandleFunc("PUT /api/users", apiCfg.updateUserHandler)
+
 	// Chirp creation endpoint
 	mux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
 

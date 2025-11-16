@@ -153,4 +153,69 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Response section
 	respondWithJSON(w, 200, loggedInUser)
+
+}
+
+func (cfg *apiConfig) updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	// Request section
+	type parameters struct {
+		Email       string `json:"email"`
+		NewPassword string `json:"new_password"`
+	}
+
+	// Extract JWT from Authorization header
+	token, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		log.Printf("Malformed or missing access token: %s", err)
+		respondWithError(w, 401, "Missing or invalid Authorization header")
+	}
+
+	// Validate JWT and extra user ID
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	if err != nil {
+		log.Printf("Invalid access token: %s", err)
+		respondWithError(w, 401, "Invalid token")
+	}
+
+	// Decode request body
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err = decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error extracting ID from token: %s", err)
+		respondWithError(w, 401, "Invalid token")
+	}
+	defer r.Body.Close()
+
+	// Hash the new password
+	hashedPassword, err := auth.HashPassword(params.NewPassword)
+	if err != nil {
+		log.Printf("Error hashing password: %s", err)
+		respondWithError(w, 500, "Internal server error")
+		return
+	}
+
+	// Update user in database
+	updatedUser, err := cfg.dbQueries.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             userID,
+		Email:          params.Email,
+		HashedPassword: hashedPassword,
+	})
+	if err != nil {
+		log.Printf("Error updating user: %s", err)
+		respondWithError(w, 500, "Error updating user")
+		return
+	}
+
+	// Map returned database user model to API user model
+	user := User{
+		ID:        updatedUser.ID,
+		CreatedAt: updatedUser.CreatedAt,
+		UpdatedAt: updatedUser.UpdatedAt,
+		Email:     updatedUser.Email,
+	}
+
+	// Response section
+	respondWithJSON(w, 200, user)
+
 }
