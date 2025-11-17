@@ -119,3 +119,54 @@ func (cfg *apiConfig) getChirpByIDHandler(w http.ResponseWriter, r *http.Request
 	}
 	respondWithJSON(w, 200, returnedChirp)
 }
+
+// Handler to delete chirp by ID - But ONLY if owned by user
+func (cfg *apiConfig) deleteChirpByIDHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract JWT from Authorization header
+	jwtToken, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, 401, "Missing or invalid Authorization header")
+		return
+	}
+
+	// Validate JWT
+	userID, err := auth.ValidateJWT(jwtToken, cfg.jwtSecret)
+	if err != nil {
+		respondWithError(w, 401, "Invalid token")
+		return
+	}
+
+	// Extract chirpID from URL
+	chirpID := r.PathValue("chirpID")
+
+	// Retrieve chirp to check ownership
+	rtnChirp, err := cfg.dbQueries.ReturnChirp(r.Context(), uuid.MustParse(chirpID))
+	if err != nil {
+		log.Printf("Error retrieving chirp by ID: %s", err)
+		respondWithError(w, 404, "Error retrieving chirp")
+		return
+	}
+
+	// Check if the chirp belongs to the user
+	if rtnChirp.UserID.UUID != userID {
+		respondWithError(w, 403, "You do not have permission to delete this chirp")
+		return
+	}
+
+	// Proceed to delete the chirp
+	// Define parameters for deletion
+	deleteParams := database.DeleteChirpParams{
+		ID:     uuid.MustParse(chirpID),
+		UserID: uuid.NullUUID{UUID: userID, Valid: true},
+	}
+
+	err = cfg.dbQueries.DeleteChirp(r.Context(), deleteParams)
+	if err != nil {
+		log.Printf("Error deleting chirp: %s", err)
+		respondWithError(w, 500, "Error deleting chirp")
+		return
+	}
+
+	// Respond with no content status
+	w.WriteHeader(204)
+}

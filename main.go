@@ -97,6 +97,9 @@ func main() {
 	// Return specfic chirp endpoint
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.getChirpByIDHandler)
 
+	// Delete chirp endpoint
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirpByIDHandler)
+
 	// Login endpoint
 	mux.HandleFunc("POST /api/login", apiCfg.userLoginHandler)
 
