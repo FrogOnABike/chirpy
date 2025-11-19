@@ -22,7 +22,7 @@ type apiConfig struct {
 	jwtSecret      string
 }
 
-// ***API models - with JSON tags for serialization***
+// *** API models - with JSON tags for serialization ***
 
 // User model with JSON tags
 type User struct {
@@ -32,6 +32,7 @@ type User struct {
 	Email        string    `json:"email"`
 	Token        string    `json:"token"`
 	RefreshToken string    `json:"refresh_token"`
+	ChirpyRed    bool      `json:"is_chirpy_red"`
 }
 
 // Chirp model with JSON tags
@@ -43,7 +44,7 @@ type Chirp struct {
 	UserID    uuid.UUID `json:"user_id"`
 }
 
-// Start of the main function
+// **** Start of the main function ****
 func main() {
 	// Load environment variables
 	godotenv.Load()
@@ -67,6 +68,8 @@ func main() {
 	// Create a new HTTP server mux
 	mux := http.NewServeMux()
 
+	// *** General handlers ***
+
 	// Handler to serve static files - Just to tidy up the next section :)
 	fileHandler := http.StripPrefix("/app/", http.FileServer(http.Dir(".")))
 
@@ -79,6 +82,8 @@ func main() {
 	// Metrics endpoint
 	mux.HandleFunc("GET /admin/metrics", apiCfg.metricsHandler)
 
+	// *** User related handlers ***
+
 	// Reset users database
 	mux.HandleFunc("POST /admin/reset", apiCfg.resetUsersHandler)
 
@@ -87,6 +92,11 @@ func main() {
 
 	// User update endpoint
 	mux.HandleFunc("PUT /api/users", apiCfg.updateUserHandler)
+
+	// Login endpoint
+	mux.HandleFunc("POST /api/login", apiCfg.userLoginHandler)
+
+	// *** Chirp related handlers ***
 
 	// Chirp creation endpoint
 	mux.HandleFunc("POST /api/chirps", apiCfg.chirpHandler)
@@ -100,16 +110,19 @@ func main() {
 	// Delete chirp endpoint
 	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.deleteChirpByIDHandler)
 
-	// Login endpoint
-	mux.HandleFunc("POST /api/login", apiCfg.userLoginHandler)
+	// *** Token related handlers ***
 
 	// Token refresh endpoint
 	mux.HandleFunc("POST /api/refresh", apiCfg.tokenRefreshHandler)
 
-	// Revolk refresh token endpoint
+	// Revoke refresh token endpoint
 	mux.HandleFunc("POST /api/revoke", apiCfg.revokeRefreshTokenHandler)
 
-	// Start the server
+	// *** Webhook related handlers ***
+
+	mux.HandleFunc("POST /api/polka/webhooks", apiCfg.webhookHandler)
+
+	// *** Start the server ***
 	chirpyServer := http.Server{
 		Addr:    ":8080",
 		Handler: mux,

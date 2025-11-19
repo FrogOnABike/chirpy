@@ -61,6 +61,7 @@ func (cfg *apiConfig) createUserHandler(w http.ResponseWriter, r *http.Request) 
 		CreatedAt: newUser.CreatedAt,
 		UpdatedAt: newUser.UpdatedAt,
 		Email:     newUser.Email,
+		ChirpyRed: newUser.IsChirpyRed,
 	}
 
 	// Response section
@@ -149,6 +150,7 @@ func (cfg *apiConfig) userLoginHandler(w http.ResponseWriter, r *http.Request) {
 		Email:        user.Email,
 		Token:        token,
 		RefreshToken: refreshtoken,
+		ChirpyRed:    user.IsChirpyRed,
 	}
 
 	// Response section
@@ -213,6 +215,7 @@ func (cfg *apiConfig) updateUserHandler(w http.ResponseWriter, r *http.Request) 
 		CreatedAt: updatedUser.CreatedAt,
 		UpdatedAt: updatedUser.UpdatedAt,
 		Email:     updatedUser.Email,
+		ChirpyRed: updatedUser.IsChirpyRed,
 	}
 
 	// Response section

@@ -4,4 +4,4 @@ ADD COLUMN is_chirpy_red BOOLEAN NOT NULL DEFAULT FALSE;
 
 -- +goose Down
 ALTER TABLE users
-DROP COLUMN his_chirpy_red;
+DROP COLUMN is_chirpy_red;
