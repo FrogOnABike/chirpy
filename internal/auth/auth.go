@@ -107,3 +107,19 @@ func MakeRefreshToken() (string, error) {
 	}
 	return hex.EncodeToString(b), nil
 }
+
+// Function to extract API Key from HTTP headers
+func GetAPIKey(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", http.ErrNoCookie
+	}
+
+	const prefix = "ApiKey "
+	if len(authHeader) <= len(prefix) || authHeader[:len(prefix)] != prefix {
+		return "", http.ErrNoCookie
+	}
+
+	return authHeader[len(prefix):], nil
+
+}
