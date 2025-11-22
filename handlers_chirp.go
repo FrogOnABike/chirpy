@@ -76,6 +76,30 @@ func (cfg *apiConfig) chirpHandler(w http.ResponseWriter, r *http.Request) {
 
 // Handler to return all chirps
 func (cfg *apiConfig) getAllChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	// Check if query param "author_id" is present
+	authorID := r.URL.Query().Get("author_id")
+	if authorID != "" {
+		// If present, return chirps by that author
+		chirps, err := cfg.dbQueries.ReturnUserChirps(r.Context(), uuid.NullUUID{UUID: uuid.MustParse(authorID), Valid: true})
+		if err != nil {
+			log.Fatalf("Error retrieving chirps by author: %s", err)
+			respondWithError(w, 500, "Error retrieving chirps by author")
+			return
+		}
+		// Map database chirps to API chirp models
+		var returnedChirps []Chirp
+		for _, chirp := range chirps {
+			var c Chirp
+			c.ID = chirp.ID
+			c.CreatedAt = chirp.CreatedAt
+			c.UpdatedAt = chirp.UpdatedAt
+			c.Body = chirp.Body
+			c.UserID = chirp.UserID.UUID
+			returnedChirps = append(returnedChirps, c)
+		}
+		respondWithJSON(w, 200, returnedChirps)
+		return
+	}
 	// Retrieve all chirps from database
 	chirps, err := cfg.dbQueries.GetAllChirps(r.Context())
 	if err != nil {
