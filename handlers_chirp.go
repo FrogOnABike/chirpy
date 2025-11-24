@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sort"
 
 	"github.com/frogonabike/chirpy/internal/auth"
 	"github.com/frogonabike/chirpy/internal/database"
@@ -74,8 +75,10 @@ func (cfg *apiConfig) chirpHandler(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, 201, createdChirp)
 }
 
-// Handler to return all chirps
+// Handler to return all chirps - GET /api/chirps
 func (cfg *apiConfig) getAllChirpsHandler(w http.ResponseWriter, r *http.Request) {
+	var returnedChirps []Chirp
+
 	// Check if query param "author_id" is present
 	authorID := r.URL.Query().Get("author_id")
 	if authorID != "" {
@@ -87,7 +90,6 @@ func (cfg *apiConfig) getAllChirpsHandler(w http.ResponseWriter, r *http.Request
 			return
 		}
 		// Map database chirps to API chirp models
-		var returnedChirps []Chirp
 		for _, chirp := range chirps {
 			var c Chirp
 			c.ID = chirp.ID
@@ -97,27 +99,36 @@ func (cfg *apiConfig) getAllChirpsHandler(w http.ResponseWriter, r *http.Request
 			c.UserID = chirp.UserID.UUID
 			returnedChirps = append(returnedChirps, c)
 		}
-		respondWithJSON(w, 200, returnedChirps)
-		return
-	}
-	// Retrieve all chirps from database
-	chirps, err := cfg.dbQueries.GetAllChirps(r.Context())
-	if err != nil {
-		log.Fatalf("Error retrieving chirps: %s", err)
-		respondWithError(w, 500, "Error retrieving chirps")
-		return
-	}
+		// respondWithJSON(w, 200, returnedChirps)
+		// return
+	} else {
+		// Retrieve all chirps from database
+		chirps, err := cfg.dbQueries.GetAllChirps(r.Context())
+		if err != nil {
+			log.Fatalf("Error retrieving chirps: %s", err)
+			respondWithError(w, 500, "Error retrieving chirps")
+			return
+		}
 
-	// Map database chirps to API chirp models
-	var returnedChirps []Chirp
-	for _, chirp := range chirps {
-		var c Chirp
-		c.ID = chirp.ID
-		c.CreatedAt = chirp.CreatedAt
-		c.UpdatedAt = chirp.UpdatedAt
-		c.Body = chirp.Body
-		c.UserID = chirp.UserID.UUID
-		returnedChirps = append(returnedChirps, c)
+		// Map database chirps to API chirp models
+		// var returnedChirps []Chirp
+		for _, chirp := range chirps {
+			var c Chirp
+			c.ID = chirp.ID
+			c.CreatedAt = chirp.CreatedAt
+			c.UpdatedAt = chirp.UpdatedAt
+			c.Body = chirp.Body
+			c.UserID = chirp.UserID.UUID
+			returnedChirps = append(returnedChirps, c)
+		}
+	}
+	// respondWithJSON(w, 200, returnedChirps)
+	// Check for sort query param - Default is ascending, so only need to handle descending
+	sortOrder := r.URL.Query().Get("sort")
+	if sortOrder == "desc" {
+		sort.Slice(returnedChirps, func(i, j int) bool {
+			return returnedChirps[i].CreatedAt.After(returnedChirps[j].CreatedAt)
+		})
 	}
 	respondWithJSON(w, 200, returnedChirps)
 }
